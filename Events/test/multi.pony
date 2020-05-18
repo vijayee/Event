@@ -1,32 +1,43 @@
 use ".."
 use "ponytest"
-
-class Echo is Event[Stringable val]
+class First is Event[None]
   let _t: TestHelper
   new create(t: TestHelper) =>
     _t = t
-  fun ref apply(data: Stringable) =>
-    _t.assert_true(data.string() == "repeat this message")
-    _t.assert_true(data.string() != " do not repeat this message")
-    _t.log(data.string())
+  fun ref apply(data: None = None) =>
+    _t.complete_action("first")
 
-
-actor EchoEmitter is EventEmitter[Stringable val, Echo iso, Echo tag]
-  let _listeners: Array[(Echo, Bool)] = Array[(Echo, Bool)](10)
+class Second is Event[None]
   let _t: TestHelper
   new create(t: TestHelper) =>
     _t = t
-  be echo(str: Stringable val) =>
-    _emit[Echo tag](str)
-  be done() =>
-    _t.complete(true)
-  fun ref _emit[E: Echo tag] (data: Stringable) =>
+  fun ref apply(data: None = None) =>
+    _t.complete_action("second")
+
+class Third is Event[None]
+  let _t: TestHelper
+  new create(t: TestHelper) =>
+    _t = t
+  fun ref apply(data: None = None) =>
+    _t.complete_action("third")
+
+type MultiEvent is (First | Second | Third)
+
+actor MultiEmitter is EventEmitter[None, MultiEvent iso, MultiEvent tag]
+  let _listeners: Array[(MultiEvent, Bool)] = Array[(MultiEvent, Bool)](10)
+  be first() =>
+    _emit[First tag]()
+  be second() =>
+    _emit[Second tag]()
+  be third() =>
+    _emit[Third tag]()
+  fun ref _emit[E: MultiEvent tag] (data: None = None) =>
     var i: USize = 0
     var onces: Array[USize] = Array[USize](_listeners.size())
     for listener in _listeners.values() do
       match listener
         | (let listener': E tag , let once': Bool) =>
-          listener._1(data.string())
+          listener._1()
           if once' then
             onces.push(i)
           end
@@ -38,10 +49,10 @@ actor EchoEmitter is EventEmitter[Stringable val, Echo iso, Echo tag]
         _listeners.delete(index)?
       end
     end
-  be on(event: Echo iso) =>
+  be on(event: MultiEvent iso) =>
     _listeners.push((consume event, false))
 
-  be off(event: Echo tag) =>
+  be off(event: MultiEvent tag) =>
       try
         var i: USize = 0
         while i < _listeners.size() do
@@ -53,5 +64,5 @@ actor EchoEmitter is EventEmitter[Stringable val, Echo iso, Echo tag]
           end
         end
       end
-  be once(event: Echo iso) =>
+  be once(event: MultiEvent iso) =>
     _listeners.push((consume event, true))
