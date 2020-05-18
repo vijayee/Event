@@ -44,9 +44,10 @@ actor MultiEmitter is EventEmitter[None, MultiEvent iso, MultiEvent tag]
       end
       i = i + 1
     end
+    i = 0
     for index in onces.values() do
       try
-        _listeners.delete(index)?
+        _listeners.delete((index - (i = i + 1)))?
       end
     end
   be on(event: MultiEvent iso) =>
