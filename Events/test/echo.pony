@@ -33,9 +33,10 @@ actor EchoEmitter is EventEmitter[Stringable val, Echo iso, Echo tag]
       end
       i = i + 1
     end
+    i = 0
     for index in onces.values() do
       try
-        _listeners.delete(index)?
+        _listeners.delete((index - (i = i + 1)))?
       end
     end
   be on(event: Echo iso) =>
