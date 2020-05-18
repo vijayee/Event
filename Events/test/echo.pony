@@ -2,11 +2,13 @@ use ".."
 use "ponytest"
 
 class Echo is Event[Stringable val]
-  let _t: Env
-  new create(env: Env) =>
-    _env = env
+  let _t: TestHelper
+  new create(t: TestHelper) =>
+    _t = t
   fun ref apply(data: Stringable) =>
-    _env.out.print(data.string())
+    _t.assert_true(data.string() == "repeat this message")
+    _t.assert_true(data.string() != " do not repeat this message")
+    _t.log(data.string())
 
 
 actor EchoEmitter is EventEmitter[Stringable val, Echo iso, Echo tag]
